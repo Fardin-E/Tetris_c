@@ -7,54 +7,41 @@ project("Tetris")
 
 # Set the thirdparty directory
 set(THIRDPARTY_DIR "${CMAKE_SOURCE_DIR}/thirdparty")
+set(raylib_DIR "${THIRDPARTY_DIR}/raylib")
 
-# Check if the raylib folder exists in the thirdparty directory
-if (EXISTS "${THIRDPARTY_DIR}/raylib")
-	message(STATUS "Found raykib in the thirdparty directory.")
-	# Use the existing raylib source
-	set(raylib_SOURCE_DIR "${THIRDPARTY_DIR}/raylib")
-	set(raylib_BINARY_DIR "${THIRDPARTY_DIR}/_deps/raylib-build")
-else()
-	message(STATUS "raylib not found in thirdparty, fetching from Github.")
-	# If raylib is not found locally, fetch from github
+# Check if raylib folder exists in the thirdparty directory
+if (NOT EXISTS "${raylib_DIR}/CMakeLists.txt")
+	message(STATUS "raylib not found in thirdparty, fetching from GitHub.")
+
+	# Use FetchContent to fetch raylib from GitHub and place it in the thirdparty directory
 	include(FetchContent)
-
 	FetchContent_Declare(
-		raylib
-		GIT_REPOSITORY https://github.com/raysan5/raylib.git # Use Github repo
-		GIT_TAG master # or specify the version eg v5.5
+			raylib
+			GIT_REPOSITORY https://github.com/raysan5/raylib.git
+			GIT_TAG master # Replace 'master' with a specific version tag if needed
+			SOURCE_DIR ${raylib_DIR}  # Fetch to the thirdparty folder
 	)
-	
-	FetchContent_GetProperties(raylib)
-	if (NOT raylib_POPULATED)
-		set(FETCHCONTENT_QUIET NO)
-		FetchContent_Populate(raylib)
 
-		#Set the source and binary directories
-		set(raylib_SOURCE_DIR ${raylib_SOURCE_DIR})
-		set(raylib_BINARY_DIR ${raylib_BINARY_DIR})
+	FetchContent_MakeAvailable(raylib)
 
-		# Additional config for raylib
-		set(BUILD_EXAMPLES OFF CACHE BOOL "Do not build examples" FORCE)
-	endif()
+	message(STATUS "Fetched raylib to ${raylib_DIR}")
+else()
+	message(STATUS "Found raylib in the thirdparty directory.")
 endif()
 
-# Add raylib as a subdirectory
-add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
-
+# Locate source files
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-# Add source to this project executable
+# Add the Tetris executable
 add_executable(${CMAKE_PROJECT_NAME} ${MY_SOURCES})
 
+# Copy assets to the build directory after building the executable
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_directory
-	"${CMAKE_SOURCE_DIR}/assets"
-	"$<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/assets"
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		"${CMAKE_SOURCE_DIR}/assets"
+		"$<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/assets"
 )
 
+# Link raylib and include directories
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE raylib)
-
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-
