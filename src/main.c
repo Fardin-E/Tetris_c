@@ -1,20 +1,23 @@
-#include "header.h"
+#include "grid.h"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
-int main()
+int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 900;
+    const int screenHeight = 800;
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(screenWidth, screenHeight, "Tetris");
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
+    Grid grid = init_grid(20, 10, 30);
 
+    draw_grid(&grid);
+    print_grid(&grid);
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
