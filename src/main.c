@@ -14,10 +14,7 @@ int main(void)
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-    Grid grid = init_grid(20, 10, 30);
 
-    draw_grid(&grid);
-    print_grid(&grid);
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
