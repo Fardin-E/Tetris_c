@@ -20,6 +20,9 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
             -fdiagnostics-color=always
             -fsanitize=address
     )
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+            -fsanitize=address  # Link AddressSanitizer runtime explicitly
+    )
 endif()
 
 # local compiler flags
