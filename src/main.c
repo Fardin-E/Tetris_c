@@ -10,9 +10,14 @@ int main(void)
     const int screenWidth = 900;
     const int screenHeight = 800;
 
+    // Initialize window
     InitWindow(screenWidth, screenHeight, "Tetris");
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    Vector2 buttonPosition = { 50.0f, 50.0f };
+    Rectangle button = { buttonPosition.x, buttonPosition.y, 100.0f, 100.0f };
+    int count = 0;
+
+    SetTargetFPS(60);  // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -20,16 +25,29 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            // Increment count when mouse button is pressed
+            count++;
+        }
+
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            // Get the current mouse position
+            buttonPosition = GetMousePosition();
+            button.x = buttonPosition.x - button.width / 2;
+            button.y = buttonPosition.y - button.height / 2;
+            //----------------------------------------------------------------------------------
+        }
 
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(RAYWHITE);  // Clear the screen with a white color
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        // Draw button and text
+        DrawRectangleRec(button, RED);
+        DrawRectangleLinesEx(button, 2.0f, BLACK);
+        DrawText(TextFormat("Count value: %d", count), 10, 20, 20, DARKGRAY);
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -37,7 +55,7 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
+    CloseWindow();  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
     return 0;
