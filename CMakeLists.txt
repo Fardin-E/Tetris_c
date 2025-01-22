@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.25)
 
 project("Tetris")
 
@@ -14,25 +14,40 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/
 # Add the executables together
 add_executable(${CMAKE_PROJECT_NAME} ${MY_SOURCES})
 
-# Set Clang-specific flags locally
+# MSVC-specific flags (only if MSVC is used and not Ninja)
+if(MSVC AND NOT CMAKE_GENERATOR STREQUAL "Ninja")
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+            /W4             # Enable warnings at level 4 (equivalent to -Wall for Clang/GCC)
+            /WX             # Treat warnings as errors
+            /O2             # Optimization level 2 (max speed)
+            /Zi             # Generate debug information
+    )
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+            /INCREMENTAL:NO  # Disable incremental linking
+            /DEBUG            # Include debug information in the executable
+    )
+endif()
+
+# Common flags for both MSVC and Clang
+# MSVC will ignore them, so only Clang and GCC will apply
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+        -O3             # Optimization level 3
+        -g              # Generate debug information
+)
+
+# Set Clang-specific flags
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+            -Wall             # Enable all warnings for Clang
+            -Wextra           # Enable extra warnings for Clang
+            -Werror           # Treat warnings as errors for Clang
             -fdiagnostics-color=always
-            -fsanitize=address
+            -fsanitize=address # Enable AddressSanitizer
     )
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
             -fsanitize=address  # Link AddressSanitizer runtime explicitly
     )
 endif()
-
-# local compiler flags
-target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
-        -Wall
-        -Wextra
-        -Werror
-        -O3
-        -g
-)
 
 # Add the include directories where your code resides
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
