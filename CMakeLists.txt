@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.25)
-
 project("Tetris")
-
 set(CMAKE_C_STANDARD 99)
 
 # Set the thirdparty directory
 set(THIRDPARTY_DIR "${CMAKE_SOURCE_DIR}/thirdparty")
 set(raylib_DIR "${THIRDPARTY_DIR}/raylib")
+
+# MSVC-specific compiler flags - setting global flags before target creation
+if(MSVC)
+    # Enable optimization flags for Release builds
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Oi /GL")
+    set(CMAKE_LINK_FLAGS_RELEASE "${CMAKE_LINK_FLAGS_RELEASE} /LTCG")
+endif()
 
 # Locate source files
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
@@ -14,44 +19,38 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/
 # Add the executables together
 add_executable(${CMAKE_PROJECT_NAME} ${MY_SOURCES})
 
-# MSVC-specific flags (only if MSVC is used and not Ninja)
-if(MSVC AND NOT CMAKE_GENERATOR STREQUAL "Ninja")
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
-            /W4             # Enable warnings at level 4 (equivalent to -Wall for Clang/GCC)
-            /WX             # Treat warnings as errors
-            /O2             # Optimization level 2 (max speed)
-            /Zi             # Generate debug information
+# MSVC-specific target compile options - after target creation
+if(MSVC)
+    # Enable multi-processor compilation
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /MP)
+    
+    # Warning level and error handling
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE 
+        /W4     # Warning level 4
+        /WX     # Treat warnings as errors
+        /wd4100 # Unreferenced formal parameter
+        /wd4505 # Unreferenced local function removed
+        /permissive- # Enforce strict standard compliance
     )
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-            /INCREMENTAL:NO  # Disable incremental linking
-            /DEBUG            # Include debug information in the executable
-    )
-endif()
-
-# Common flags for both MSVC and Clang
-# MSVC will ignore them, so only Clang and GCC will apply
-target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
-        -O3             # Optimization level 3
-        -g              # Generate debug information
-)
-
-# Set Clang-specific flags
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
-            -Wall             # Enable all warnings for Clang
-            -Wextra           # Enable extra warnings for Clang
-            -Werror           # Treat warnings as errors for Clang
-            -fdiagnostics-color=always
-            -fsanitize=address # Enable AddressSanitizer
-    )
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-            -fsanitize=address  # Link AddressSanitizer runtime explicitly
-    )
+    
+    # Runtime library selection
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /MDd)
+    else()
+        target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /MD)
+    endif()
+    
+    # Buffer security check
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /GS)
+    
+    # Enable debug information in all builds
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /Zi)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
 endif()
 
 # Add the include directories where your code resides
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Link raylib and include directories
@@ -59,7 +58,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE raylib)
 
 # Explicitly set the include directory for raylib
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
-        ${raylib_DIR}/src  # Add raylib's src directory to the include path
+    ${raylib_DIR}/src  # Add raylib's src directory to the include path
 )
 
 # If raylib isn't building automatically, this will force it to be built recursively
